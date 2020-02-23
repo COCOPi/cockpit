@@ -1,4 +1,4 @@
-FROM php:7-apache
+FROM php:7.3-apache
 
 RUN apt-get update \
     && apt-get install -y \
@@ -22,4 +22,4 @@ RUN chown -R www-data:www-data /var/www/html
 
 VOLUME /var/www/html
 
-CMD ["apache2-foreground"]
+CMD php -f /var/www/html/install/init.php && apache2-foreground
