@@ -17,6 +17,10 @@ class Auth extends \LimeExtra\Controller {
 
         if ($data = $this->param('auth')) {
 
+            if (!\is_string($data['user']) || !\is_string($data['password'])) {
+                return ['success' => false, 'error' => 'Pre-condition failed'];
+            }
+
             if (isset($data['user']) && $this->app->helper('utils')->isEmail($data['user'])) {
                 $data['email'] = $data['user'];
                 $data['user']  = '';
@@ -34,14 +38,18 @@ class Auth extends \LimeExtra\Controller {
             }
 
             if ($user) {
+                
                 $this->app->trigger('cockpit.authentication.success', [&$user]);
                 $this->module('cockpit')->setUser($user);
+
+                unset($user['api_key'], $user['_reset_token']);
+
             } else {
                 $this->app->trigger('cockpit.authentication.failed', [$data, 'User not found']);
             }
 
             if ($this->app->request->is('ajax')) {
-                return $user ? ['success' => true, 'user' => $user, 'avatar'=> md5($user['email'])] : ['success' => false, 'error' => 'User not found'];
+                return $user ? ['success' => true, 'user' => $user] : ['success' => false, 'error' => 'User not found'];
             } else {
                 $this->reroute('/');
             }
@@ -68,7 +76,7 @@ class Auth extends \LimeExtra\Controller {
         $this->module('cockpit')->logout();
 
         if ($this->app->request->is('ajax')) {
-            return '{"logout":1}';
+            return ['logout' => true];
         } else {
             $this->reroute('/auth/login?logout=1');
         }
@@ -128,13 +136,21 @@ class Auth extends \LimeExtra\Controller {
 
         if ($token = $this->param('token')) {
 
+            if (!\is_string($token)) {
+                return false;
+            }
+
             $user = $this->app->storage->findOne('cockpit/accounts', ['_reset_token' => $token]);
 
             if (!$user) {
                 return false;
             }
 
-            $user['md5email'] = md5($user['email']);
+            $user = [
+                'md5email' => md5($user['email']),
+                'user' => $user['user'],
+                'name' => $user['name'],
+            ];
 
             return $this->render('cockpit:views/layouts/newpassword.php', compact('user', 'token'));
         }
@@ -146,6 +162,10 @@ class Auth extends \LimeExtra\Controller {
     public function resetpassword() {
 
         if ($token = $this->param('token')) {
+
+            if (!\is_string($token)) {
+                return false;
+            }
 
             $user = $this->app->storage->findOne('cockpit/accounts', ['_reset_token' => $token]);
             $password = trim($this->param('password'));

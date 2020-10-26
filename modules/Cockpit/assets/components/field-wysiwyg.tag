@@ -71,12 +71,14 @@
                             height: 350,
                             menubar: 'edit insert view format table tools',
                             plugins: [
-                                "link image lists preview hr anchor",
+                                "link image lists preview hr anchor textcolor colorpicker",
                                 "code fullscreen media cpmediapath cpassetpath",
                                 "cpcollectionlink",
                                 "table contextmenu paste"
                             ],
-                            relative_urls: false
+                            toolbar: "undo redo | styleselect | bold italic | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | table | fontsizeselect forecolor",
+                            relative_urls: false,
+                            convert_urls : false
                         }, opts.editor || {}, {
 
                           selector: '#'+this.refs.input.id,

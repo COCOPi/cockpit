@@ -224,7 +224,8 @@ class RestApi extends \LimeExtra\Controller {
             'quality' => intval($this->param('q', 100)),
             'rebuild' => intval($this->param('r', false)),
             'base64'  => intval($this->param('b64', false)),
-            'output'  => $this->param('o', false)
+            'output'  => $this->param('o', false),
+            'redirect' => intval($this->param('re', false))
         ];
 
         // Set single filter when available
@@ -254,6 +255,24 @@ class RestApi extends \LimeExtra\Controller {
         if ($skip   = $this->param('skip', null))   $options['skip'] = $skip;
 
         return $this->module('cockpit')->listAssets($options);
+    }
+
+    public function asset($id = null) {
+
+        if (!$id) {
+            return $this->stop('{"error": "Missing id parameter"}', 412);
+        }
+
+        $options = [
+            'filter' => ['_id' => $id]
+        ];
+
+        if ($filter = $this->param('filter', null)) $options['filter'] = $filter;
+        if ($fields = $this->param('fields', null)) $options['fields'] = $fields;
+
+        $assets = $this->module('cockpit')->listAssets($options);
+
+        return $assets[0] ?? false;
     }
 
     public function addAssets() {

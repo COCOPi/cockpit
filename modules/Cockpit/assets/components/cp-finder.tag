@@ -62,7 +62,7 @@
 
             </div>
 
-            <div class="uk-float-right">
+            <div class="uk-float-right uk-flex">
 
                 <span class="uk-margin-right uk-position-relative" data-uk-dropdown="mode:'click', pos:'bottom-right'">
 
@@ -78,17 +78,37 @@
 
                 </span>
 
-                <span class="uk-button-group">
+                <div data-uk-dropdown="mode:'click'">
 
-                    <span class="uk-button uk-button-large uk-button-primary uk-form-file">
-                        <input class="js-upload-select" type="file" multiple="true" title="">
-                        <i class="uk-icon-upload"></i>
-                    </span>
+                    <a class="uk-button uk-button-large uk-button-primary"><i class="uk-icon-upload"></i></a>
 
-                    <button class="uk-button uk-button-large" onclick="{ refresh }">
-                        <i class="uk-icon-refresh"></i>
-                    </button>
-                </span>
+                    <div class="uk-dropdown uk-margin-top uk-text-left">
+
+                        <ul class="uk-nav uk-nav-dropdown uk-dropdown-close">
+                            <li class="uk-nav-header uk-flex uk-flex-middle">
+                                <span class="uk-flex-item-1">{ App.i18n.get('Upload') }</span>
+                                <span class="uk-badge uk-badge-outline uk-text-warning"> max. { App.Utils.formatSize(App.$data.maxUploadSize) }</span>
+                            </li>
+                            <li>
+                                <a class="uk-form-file">
+                                    <i class="uk-icon-file-o uk-icon-justify"></i> { App.i18n.get('File') }
+                                    <input class="js-upload-select" type="file" multiple="true" title="">
+                                </a>
+                                <a class="uk-form-file">
+                                    <i class="uk-icon-folder-o uk-icon-justify"></i> { App.i18n.get('Folder') }
+                                    <input class="js-upload-folder" type="file" title="" multiple multiple directory webkitdirectory allowdirs>
+                                </a>
+                            </li>
+                        </ul>
+
+                    </div>
+
+                    
+                </div>
+
+                <button class="uk-button uk-button-large" onclick="{ refresh }">
+                    <i class="uk-icon-refresh"></i>
+                </button>
 
                 <span class="uk-margin-left" if="{ selected.count }" data-uk-dropdown="mode:'click', pos:'bottom-right'">
                     <span class="uk-button uk-button-large"><strong>{ App.i18n.get('Batch') }:</strong> { selected.count } &nbsp;<i class="uk-icon-caret-down"></i></span>
@@ -202,20 +222,19 @@
                                         <cp-thumbnail src="{file.url}" width="400" height="300" if="{ parent.getIconCls(file) == 'image' }"></cp-thumbnail>
                                     </div>
 
-
                                     <div class="uk-flex">
                                         <a class="uk-link-muted uk-flex-item-1 js-no-item-select uk-text-truncate uk-margin-small-right" onclick="{ parent.open }">{ file.name }</a>
                                         <span class="uk-margin-small-right" data-uk-dropdown="mode:'click', pos:'bottom-right'">
                                             <a><i class="uk-icon-ellipsis-v js-no-item-select"></i></a>
                                             <div class="uk-dropdown">
-                                                <ul class="uk-nav uk-nav-dropdown">
+                                                <ul class="uk-nav uk-nav-dropdown uk-dropdown-close">
                                                     <li class="uk-nav-header uk-text-truncate">{ file.name }</li>
-                                                    <li><a class="uk-link-muted uk-dropdown-close js-no-item-select" onclick="{ parent.open }">{ App.i18n.get('Open') }</a></li>
-                                                    <li><a class="uk-dropdown-close" onclick="{ parent.rename }">{ App.i18n.get('Rename') }</a></li>
-                                                    <li><a class="uk-dropdown-close" onclick="{ parent.download }">{ App.i18n.get('Download') }</a></li>
+                                                    <li><a class="uk-link-muted js-no-item-select" onclick="{ parent.open }">{ App.i18n.get('Open') }</a></li>
+                                                    <li><a onclick="{ parent.rename }">{ App.i18n.get('Rename') }</a></li>
+                                                    <li><a onclick="{ parent.download }">{ App.i18n.get('Download') }</a></li>
                                                     <li if="{ file.ext == 'zip' }"><a onclick="{ parent.unzip }">{ App.i18n.get('Unzip') }</a></li>
                                                     <li class="uk-nav-divider"></li>
-                                                    <li class="uk-nav-item-danger"><a class="uk-dropdown-close" onclick="{ parent.remove }">{ App.i18n.get('Delete') }</a></li>
+                                                    <li class="uk-nav-item-danger"><a onclick="{ parent.remove }">{ App.i18n.get('Delete') }</a></li>
                                                 </ul>
                                             </div>
                                         </span>
@@ -257,12 +276,12 @@
                                             <div class="uk-dropdown uk-dropdown-flip">
                                                 <ul class="uk-nav uk-nav-dropdown uk-dropdown-close">
                                                     <li class="uk-nav-header">{ App.i18n.get('Actions') }</li>
-                                                    <li><a class="uk-link-muted uk-dropdown-close js-no-item-select" onclick="{ parent.open }">{ App.i18n.get('Open') }</a></li>
-                                                    <li><a class="uk-dropdown-close" onclick="{ parent.rename }">{ App.i18n.get('Rename') }</a></li>
-                                                    <li><a class="uk-dropdown-close" onclick="{ parent.download }">{ App.i18n.get('Download') }</a></li>
+                                                    <li><a class="uk-link-muted js-no-item-select" onclick="{ parent.open }">{ App.i18n.get('Open') }</a></li>
+                                                    <li><a onclick="{ parent.rename }">{ App.i18n.get('Rename') }</a></li>
+                                                    <li><a onclick="{ parent.download }">{ App.i18n.get('Download') }</a></li>
                                                     <li if="{ file.ext == 'zip' }"><a onclick="{ parent.unzip }">{ App.i18n.get('Unzip') }</a></li>
                                                     <li class="uk-nav-divider"></li>
-                                                    <li class="uk-nav-item-danger"><a class="uk-dropdown-close" onclick="{ parent.remove }">{ App.i18n.get('Delete') }</a></li>
+                                                    <li class="uk-nav-item-danger"><a onclick="{ parent.remove }">{ App.i18n.get('Delete') }</a></li>
                                                 </ul>
                                             </div>
                                         </span>
@@ -333,7 +352,10 @@
             this.loadPath()
 
             // handle uploads
-            App.assets.require(['/assets/lib/uikit/js/components/upload.js'], function() {
+            App.assets.require([
+                '/assets/lib/uikit/js/components/upload.js',
+                '/assets/lib/uppie.js'
+            ], function() {
 
                 var uploadSettings = {
 
@@ -376,6 +398,51 @@
                 uploadselect = UIkit.uploadSelect(App.$('.js-upload-select', $this.root)[0], uploadSettings),
                 uploaddrop   = UIkit.uploadDrop($this.root, uploadSettings);
 
+                // upload folder
+                
+                var uppie = new Uppie();
+
+                uppie($this.root.querySelector('.js-upload-folder'), async (e, formData, files) => {
+                    
+                    if (!files) return;
+
+                    files.forEach(function(path) {
+                        formData.append("paths[]", path);
+                    });
+
+                    formData.append("path", $this.currentpath);
+
+                    var xhr = new XMLHttpRequest();
+
+                    xhr.open('POST', App.route('/media/api?cmd=uploadfolder'), true);
+
+                    xhr.setRequestHeader('Accept', 'application/json');
+
+                    xhr.upload.addEventListener('progress', function(e){
+                        uploadSettings.progress((e.loaded / e.total)*100, e);
+                    }, false);
+
+                    xhr.addEventListener('loadstart', function(e){ uploadSettings.loadstart(e); }, false);
+                    
+                    xhr.onreadystatechange = function() {
+
+                        if (xhr.readyState==4){
+
+                            var response = xhr.responseText;
+
+                            try {
+                                response = App.$.parseJSON(response);
+                            } catch(e) {
+                                response = false;
+                            }
+
+                            uploadSettings.allcomplete(response, xhr);
+                        }
+                    };
+                    
+                    xhr.send(formData);
+                });
+
                 UIkit.init(this.root);
             });
         });
@@ -417,7 +484,7 @@
                     {'source': file.url, 'type':'video'}
                 ]).show();
 
-            } else if(name.match(typefilters.text)) {
+            } else if(name.match(typefilters.text) || name=='.env') {
 
                 UIkit.offcanvas.show(this.refs.editor);
                 this.tags.picoedit.open(file.path);
@@ -429,7 +496,7 @@
 
         refresh() {
             this.loadPath().then(function(){
-                App.ui.notify('Folder reloaded');
+                App.ui.notify('Folder reloaded', 'success');
             });
         }
 
@@ -564,6 +631,8 @@
                     $this.data[item.is_file ? "files":"folders"].splice(index, 1);
 
                     App.ui.notify("Item(s) deleted", "success");
+
+                    $this.resetselected();
 
                     $this.update();
                 });

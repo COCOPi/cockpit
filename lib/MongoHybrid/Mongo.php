@@ -49,6 +49,32 @@ class Mongo {
         return $this->db->dropCollection($name);
     }
 
+    public function renameCollection($name, $newname, $db = null) {
+
+        if ($db) {
+            $name = "{$db}/{$name}";
+            $newname = "{$db}/{$newname}";
+        }
+
+        $name = str_replace('/', '_', $name);
+        $newname = str_replace('/', '_', $newname);
+
+        $collections = iterator_to_array($this->db->listCollections([
+            'filter' => [ 'name' => $name ]
+        ]));
+
+        if (!count($collections)) {
+            return false;
+        }
+
+        //$dbname = $this->db->getDatabaseName();
+
+        // notice works for mongodb < 4.0
+        $this->db->command(["eval" => "db.{$name}.renameCollection({$newname})"]);
+
+        return true;
+    }
+
     public function findOneById($collection, $id){
 
         if (is_string($id)) $id = new \MongoDB\BSON\ObjectID($id);
@@ -161,7 +187,7 @@ class Mongo {
         $criteria = $this->_fixMongoIds($criteria);
         $data     = $this->_fixMongoIds($data);
 
-        return $this->getCollection($collection)->updateMany($criteria, $data);
+        return $this->getCollection($collection)->updateMany($criteria, ['$set' => $data]);
     }
 
     public function remove($collection, $filter=[]) {

@@ -1,17 +1,33 @@
 <cp-field>
 
-    <div ref="field" data-is="{ 'field-'+opts.type }" bind="{ opts.bind }" cls="{ opts.cls }"></div>
+    <div ref="field" data-is="{ 'field-'+opts.type }" bind="{ opts.bind }"></div>
 
     <script>
 
         this.on('mount', function() {
+
+            var o = opts.opts || {};
+
+            if (this.root.$value == undefined && o.default !== undefined) {
+                this.$setValue(o.default);
+            }
+
+            if (this.root.$value == undefined) {
+                this.$setValue(null);
+            }
+
+            if (o.disabled) {
+                this.root.classList.add('uk-disabled');
+            }
+
             this.parent.update();
         });
 
         this.on('update', function() {
 
             this.refs.field.opts.bind = opts.bind;
-            this.refs.field.opts.bind = opts.opts || {};
+
+            if (opts.required) this.refs.field.opts.required = opts.required;
 
             if (opts.opts) {
                 App.$.extend(this.refs.field.opts, opts.opts);
@@ -205,7 +221,7 @@
         this.data = null;
 
         this.on('mount', function() {
-            
+
         });
 
         this.show = function(data) {
@@ -225,19 +241,19 @@
         }
 
         this.syntaxHighlight = function(json) {
-        
+
             if (typeof json != 'string') {
                 json = JSON.stringify(json, undefined, 2);
             }
 
             var cls;
-            
+
             json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-            
+
             return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
-                
+
                 cls = 'number';
-                
+
                 if (/^"/.test(match)) {
                     cls = /:$/.test(match) ? 'key' : 'string';
                 } else if (/true|false/.test(match)) {
@@ -245,7 +261,7 @@
                 } else if (/null/.test(match)) {
                     cls = 'null';
                 }
-                
+
                 return '<span class="'+cls+'">'+match+'</span>';
             });
         }

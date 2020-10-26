@@ -91,7 +91,7 @@
                                     @hasaccess?('collections', 'delete')
                                     <li class="uk-nav-item-danger" if="{ collection.meta.allowed.delete }"><a class="uk-dropdown-close" onclick="{ parent.remove }">@lang('Delete')</a></li>
                                     @end
-                                    <li class="uk-nav-divider" if="{ collection.meta.allowed.edit }" if="{ collection.meta.allowed.entries_delete }"></li>
+                                    <li class="uk-nav-divider" if="{ collection.meta.allowed.edit || collection.meta.allowed.entries_delete }"></li>
                                     <li><a href="@route('/collections/trash/collection')/{collection.name}" if="{ collection.meta.allowed.entries_delete }">@lang('Trash')</a></li>
                                     <li class="uk-nav-divider" if="{ collection.meta.allowed.edit }"></li>
                                     <li class="uk-text-truncate" if="{ collection.meta.allowed.edit }"><a href="@route('/collections/export')/{ collection.name }" download="{ collection.meta.name }.collection.json">@lang('Export entries')</a></li>
@@ -99,7 +99,7 @@
                                 </ul>
                             </div>
                         </div>
-                        <div class="uk-flex-item-1 uk-text-center uk-text-truncate"><a class="uk-text-bold uk-link-muted" href="@route('/collections/entries')/{collection.name}">{ collection.label }</a></div>
+                        <div class="uk-flex-item-1 uk-text-center uk-text-truncate"><a class="uk-text-bold uk-link-muted" href="@route('/collections/entries')/{collection.name}" title="{ collection.label }">{ collection.label }</a></div>
                         <div class="panel-footer-aside uk-text-right">
                             <span class="uk-badge" riot-style="background-color:{ (collection.meta.color) }">
                                 <span if="{ collection.meta.itemsCount !==null }">{ collection.meta.itemsCount }</span>

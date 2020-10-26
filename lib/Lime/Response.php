@@ -139,6 +139,10 @@ class Response {
 
     public function flush() {
 
+        if ($this->gzip && !\ob_start('ob_gzhandler')) {
+            \ob_start();
+        }
+
         if (!headers_sent($filename, $linenum)) {
 
             $body = $this->body;
@@ -159,7 +163,7 @@ class Response {
             }
 
             \header('HTTP/1.0 '.$this->status.' '.self::$statusCodes[$this->status]);
-            \header('Content-type: '.self::$mimeTypes[$this->mime]);
+            \header('Content-type: '.(self::$mimeTypes[$this->mime] ?? 'text/html'));
 
             foreach ($this->headers as $h) {
                 \header($h);

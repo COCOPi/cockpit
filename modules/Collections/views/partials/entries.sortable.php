@@ -19,7 +19,7 @@
         <img class="uk-svg-adjust" src="@url($collection['icon'] ? 'assets:app/media/icons/'.$collection['icon']:'collections:icon.svg')" width="50" alt="icon" data-uk-svg>
         @if($collection['description'])
         <div class="uk-container-center uk-margin-top uk-width-medium-1-2">
-            {{ htmlspecialchars($collection['description']) }}
+            {{ htmlspecialchars($collection['description'], ENT_QUOTES, 'UTF-8') }}
         </div>
         @endif
     </div>
@@ -33,7 +33,7 @@
                 <img class="uk-svg-adjust" src="@url($collection['icon'] ? 'assets:app/media/icons/'.$collection['icon']:'collections:icon.svg')" width="50" alt="icon" data-uk-svg>
                 @if($collection['description'])
                 <div class="uk-margin-top uk-text-small uk-text-muted">
-                    {{ htmlspecialchars($collection['description']) }}
+                    {{ htmlspecialchars($collection['description'], ENT_QUOTES, 'UTF-8') }}
                 </div>
                 @endif
                 <hr>
@@ -60,7 +60,7 @@
                 <div class="uk-form-icon uk-form uk-width-1-1 uk-text-muted">
 
                     <i class="uk-icon-search"></i>
-                    <input class="uk-width-1-1 uk-form-large uk-form-blank" type="text" ref="txtfilter" placeholder="@lang('Filter items...')" onchange="{ updatefilter }">
+                    <input class="uk-width-1-1 uk-form-large uk-form-blank {filter && filter.match(/\{(.*)\}/) && 'uk-text-monospace'}" type="text" ref="txtfilter" placeholder="@lang('Filter items...')" onchange="{ updatefilter }">
 
                 </div>
             </div>
@@ -178,7 +178,7 @@
 
         this.initState = function() {
 
-            var searchParams = new URLSearchParams(location.search);
+            var searchParams = App.Utils.params();
 
             if (searchParams.has('q')) {
 

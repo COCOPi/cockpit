@@ -76,11 +76,11 @@ class Cursor implements \Iterator {
 
         if (!$this->criteria) {
 
-            $stmt = $this->collection->database->connection->query('SELECT COUNT(*) AS C FROM '.$this->collection->name);
+            $stmt = $this->collection->database->connection->query('SELECT COUNT(*) AS C FROM '.$this->collection->database->connection->quote($this->collection->name));
 
         } else {
 
-            $sql = ['SELECT COUNT(*) AS C FROM '.$this->collection->name];
+            $sql = ['SELECT COUNT(*) AS C FROM '.$this->collection->database->connection->quote($this->collection->name)];
 
             $sql[] = 'WHERE document_criteria("'.$this->criteria.'", document)';
 
@@ -167,7 +167,8 @@ class Cursor implements \Iterator {
      */
     protected function getData() {
 
-        $sql = ['SELECT document FROM '.$this->collection->name];
+        $conn = $this->collection->database->connection;
+        $sql = ['SELECT document FROM '.$conn->quote($this->collection->name)];
 
         if ($this->criteria) {
 
@@ -179,7 +180,7 @@ class Cursor implements \Iterator {
             $orders = [];
 
             foreach ($this->sort as $field => $direction) {
-                $orders[] = 'document_key("'.$field.'", document) '.($direction==-1 ? 'DESC':'ASC');
+                $orders[] = 'document_key('.$conn->quote($field).', document) '.($direction==-1 ? 'DESC':'ASC');
             }
 
             $sql[] = 'ORDER BY '.\implode(',', $orders);
@@ -193,7 +194,7 @@ class Cursor implements \Iterator {
 
         $sql = implode(' ', $sql);
 
-        $stmt      = $this->collection->database->connection->query($sql);
+        $stmt      = $conn->query($sql);
         $result    = $stmt->fetchAll( \PDO::FETCH_ASSOC);
         $documents = [];
 

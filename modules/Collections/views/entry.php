@@ -1,14 +1,19 @@
-
-<script type="riot/tag" src="@base('collections:assets/collection-entrypreview.tag')"></script>
+<script type="riot/tag" src="@base('collections:assets/collection-entrypreview.tag')?nc={{ $app['debug'] ? time() : $app['cockpit/version'] }}"></script>
+<script type="riot/tag" src="@base('collections:assets/collection-linked.tag')?nc={{ $app['debug'] ? time() : $app['cockpit/version'] }}"></script>
 
 <style>
-    @if(isset($collection['color']) && $collection['color'])
-    .app-header { border-top: 8px {{ $collection['color'] }} solid; }
+    @if(isset($collection['color']) && $collection['color']) 
+
+    .app-header {
+        border-top: 8px <?=$collection['color']?> solid;
+    }
+
     @endif
 </style>
 
 <script>
-    window.__collectionEntry = {{ json_encode($entry) }};
+    window.__collectionEntry = <?=json_encode($entry)?>;
+    window.__collection = <?=json_encode($collection)?>;
 </script>
 
 <div riot-view>
@@ -20,7 +25,7 @@
             <ul class="uk-breadcrumb">
                 <li><a href="@route('/collections')">@lang('Collections')</a></li>
                 <li data-uk-dropdown="mode:'hover', delay:300">
-                    <a href="@route('/collections/entries/'.$collection['name'])"><i class="uk-icon-bars"></i> {{ htmlspecialchars(@$collection['label'] ? $collection['label']:$collection['name']) }}</a>
+                    <a href="@route('/collections/entries/'.$collection['name'])"><i class="uk-icon-bars"></i> {{ htmlspecialchars(@$collection['label'] ? $collection['label']:$collection['name'], ENT_QUOTES, 'UTF-8') }}</a>
 
                     @if($app->module('collections')->hasaccess($collection['name'], 'collection_edit'))
                     <div class="uk-dropdown">
@@ -45,11 +50,7 @@
                     <img src="@url($collection['icon'] ? 'assets:app/media/icons/'.$collection['icon']:'collections:icon.svg')" width="40" alt="icon">
                 </div>
                 <div class="uk-margin-right">{ App.i18n.get(entry._id ? 'Edit Entry':'Add Entry') }</div>
-                <a onclick="{showPreview}" if="{ collection.contentpreview && collection.contentpreview.enabled }" title="@lang('Preview')"><i class="uk-icon-button uk-icon-eye"></i></a>
-                @if($app->module('cockpit')->isSuperAdmin())
                 <div class="uk-flex-item-1"></div>
-                <a class="uk-button uk-button-outline uk-text-warning" onclick="{showEntryObject}">@lang('Show json')</a>
-                @endif
             </div>
         </div>
 
@@ -63,10 +64,10 @@
                 <a>{ App.i18n.get(group || 'All') } <i class="uk-margin-small-left uk-icon-angle-down"></i></a>
                 <div class="uk-dropdown uk-dropdown-scrollable uk-dropdown-close">
                     <ul class="uk-nav uk-nav-dropdown">
-                    <li class="uk-nav-header">@lang('Groups')</li>
-                    <li class="{ !group && 'uk-active'}"><a class="uk-text-capitalize" onclick="{ toggleGroup }">{ App.i18n.get('All') }</a></li>
-                    <li class="uk-nav-divider"></li>
-                    <li class="{ group==parent.group && 'uk-active'}" each="{group in _groups}" show="{ parent.groups[group].length }"><a class="uk-text-capitalize" onclick="{ toggleGroup }">{ App.i18n.get(group) }</a></li>
+                        <li class="uk-nav-header">@lang('Groups')</li>
+                        <li class="{ !group && 'uk-active'}"><a class="uk-text-capitalize" onclick="{ toggleGroup }">{ App.i18n.get('All') }</a></li>
+                        <li class="uk-nav-divider"></li>
+                        <li class="{ group==parent.group && 'uk-active'}" each="{group in _groups}" show="{ parent.groups[group].length }"><a class="uk-text-capitalize" onclick="{ toggleGroup }">{ App.i18n.get(group) }</a></li>
                     </ul>
                 </div>
             </li>
@@ -74,14 +75,13 @@
 
     </div>
 
-
     <div class="uk-alert" if="{ !fields.length }">
         @lang('No fields defined'). <a href="@route('/collections/collection')/{ collection.name }">@lang('Define collection fields').</a>
     </div>
 
     <div class="uk-grid">
 
-        <div class="uk-grid-margin uk-width-medium-3-4">
+        <div class="uk-grid-margin uk-width-medium-3-4 uk-width-large-4-5">
 
             <form class="uk-form" if="{ fields.length }" onsubmit="{ submit }">
 
@@ -110,7 +110,7 @@
                             </label>
 
                             <div class="uk-margin-top">
-                                <cp-field type="{field.type || 'text'}" bind="entry.{ field.localize && parent.lang ? (field.name+'_'+parent.lang):field.name }" opts="{ field.options || {} }"></cp-field>
+                                <cp-field type="{field.type || 'text'}" bind="entry.{ field.localize && parent.lang ? (field.name+'_'+parent.lang):field.name }" opts="{ field.options || {} }" required="{ field.required || false }"></cp-field>
                             </div>
 
                             <div class="uk-margin-top uk-text-small uk-text-muted" if="{field.info}">
@@ -137,27 +137,33 @@
 
         </div>
 
-        <div class="uk-grid-margin uk-width-medium-1-4 uk-flex-order-first uk-flex-order-last-medium">
+        <div class="uk-grid-margin uk-width-medium-1-4  uk-width-large-1-5 uk-flex-order-first uk-flex-order-last-medium">
 
-            <div class="uk-margin uk-form" if="{ languages.length }">
+            <div class="uk-button-group uk-flex uk-margin" if="{entry._id}">
+                <a class="uk-button" onclick="{showPreview}" if="{ collection.contentpreview && collection.contentpreview.enabled }">@lang('Preview')</a>
+                <a class="uk-button" onclick="{showLinkedOverview}">@lang('Linked')</a>
+                @if($app->module('cockpit')->isSuperAdmin())
+                <a class="uk-button" onclick="{showEntryObject}">@lang('Json')</a>
+                @endif
+            </div>
 
-                <div class="uk-width-1-1 uk-form-select">
+            <div class="uk-panel uk-panel-box uk-panel-framed uk-width-1-1 uk-form-select uk-form" if="{ languages.length }">
 
-                    <label class="uk-text-small">@lang('Language')</label>
-                    <div class="uk-margin-small-top"><span class="uk-badge uk-badge-outline {lang ? 'uk-text-primary' : 'uk-text-muted'}">{ lang ? _.find(languages,{code:lang}).label:App.$data.languageDefaultLabel }</span></div>
-
-                    <select bind="lang" onchange="{persistLanguage}">
-                        <option value="">{App.$data.languageDefaultLabel}</option>
-                        <option each="{language,idx in languages}" value="{language.code}">{language.label}</option>
-                    </select>
+                <div class="uk-text-bold {lang ? 'uk-text-primary' : 'uk-text-muted'}">
+                    <i class="uk-icon-globe"></i>
+                    <span class="uk-margin-small-left">{ lang ? _.find(languages,{code:lang}).label:App.$data.languageDefaultLabel }</span>
                 </div>
 
+                <select bind="lang" onchange="{persistLanguage}">
+                    <option value="">{App.$data.languageDefaultLabel}</option>
+                    <option each="{language,idx in languages}" value="{language.code}">{language.label}</option>
+                </select>
             </div>
 
             <div class="uk-margin">
                 <label class="uk-text-small">@lang('Last Modified')</label>
                 <div class="uk-margin-small-top uk-text-muted" if="{entry._id}">
-                    <i class="uk-icon-calendar uk-margin-small-right"></i> {  App.Utils.dateformat( new Date( 1000 * entry._modified )) }
+                    <i class="uk-icon-calendar uk-margin-small-right"></i> { App.Utils.dateformat( new Date( 1000 * entry._modified )) }
                 </div>
                 <div class="uk-margin-small-top uk-text-muted" if="{!entry._id}">@lang('Not saved yet')</div>
             </div>
@@ -187,6 +193,7 @@
 
     <collection-entrypreview collection="{collection}" entry="{entry}" groups="{ groups }" fields="{ fields }" fieldsidx="{ fieldsidx }" excludeFields="{ excludeFields }" languages="{ languages }" lang="{ lang }" settings="{ collection.contentpreview }" if="{ preview }"></collection-entrypreview>
     <cp-inspectobject ref="inspect"></cp-inspectobject>
+    <collection-linked ref="entrylinked"></collection-linked>
 
     <script type="view/script">
 
@@ -194,7 +201,7 @@
 
         this.mixin(RiotBindMixin);
 
-        this.collection   = {{ json_encode($collection) }};
+        this.collection   = window.__collection;
         this.fields       = this.collection.fields;
         this.fieldsidx    = {};
         this.excludeFields = {{ json_encode($excludeFields) }};
@@ -206,7 +213,7 @@
         this.group        = '';
 
         if (this.languages.length) {
-            this.lang = App.session.get('collections.entry.'+this.collection._id+'.lang', '');
+            this.lang = App.Utils.params('lang') || App.session.get('collections.entry.'+this.collection._id+'.lang', '');
         }
 
         // fill with default values
@@ -300,13 +307,15 @@
                 e.preventDefault();
             }
 
-            var required = [];
+            var required = [], val;
 
-            this.fields.forEach(function(field){
+            this.fields.forEach(function(field) {
 
-                if (field.required && !$this.entry[field.name]) {
+                val = $this.entry[field.name];
 
-                    if (!($this.entry[field.name]===false || $this.entry[field.name]===0)) {
+                if (field.required && (!val || (Array.isArray(val) && !val.length))) {
+
+                    if (!(val===false || val===0)) {
                         required.push(field.label || field.name);
                     }
                 }
@@ -411,6 +420,15 @@
         showEntryObject() {
             $this.refs.inspect.show($this.entry);
             $this.update();
+        }
+
+        showLinkedOverview() {
+
+            console.log(this.refs)
+
+            $this.refs.entrylinked.show($this.entry);
+            $this.update();
+
         }
 
     </script>

@@ -16,7 +16,14 @@ class RestApi extends \LimeExtra\Controller {
         $this->app->response->mime = 'json';
     }
 
-    public function get($collection=null) {
+    /**
+     * Deprecated! use /entries instead
+     */
+    public function get($collection = null) {
+        return $this->entries($collection);
+    }
+
+    public function entries($collection = null) {
 
         if (!$collection) {
             return $this->stop('{"error": "Missing collection name"}', 412);
@@ -114,7 +121,61 @@ class RestApi extends \LimeExtra\Controller {
 
     }
 
-    public function save($collection=null) {
+    public function entry($collection = null, $id = null) {
+
+        if (!$collection) {
+            return $this->stop('{"error": "Missing collection name"}', 412);
+        }
+
+        if (!$this->module('collections')->exists($collection)) {
+            return $this->stop('{"error": "Collection not found"}', 412);
+        }
+
+        if (!$id && !$this->param('filter')) {
+            return $this->stop('{"error": "Missing id parameter"}', 412);
+        }
+
+        $collection = $this->module('collections')->collection($collection);
+        $user = $this->module('cockpit')->getUser();
+
+        if ($user) {
+
+            if (!$this->module('collections')->hasaccess($collection['name'], 'entries_view')) {
+                return $this->stop('{"error": "Unauthorized"}', 401);
+            }
+        }
+
+        $filter = $this->param('filter');
+
+        if (!$filter) {
+            $filter = ['_id' => $id];
+        }
+
+        $options = [];
+
+        if ($fields   = $this->param('fields', null))   $options['fields'] = $fields;
+        if ($populate = $this->param('populate', null)) $options['populate'] = $populate;
+
+        // fields filter
+        if ($fieldsFilter = $this->param('fieldsFilter', [])) $options['fieldsFilter'] = $fieldsFilter;
+        if ($lang = $this->param('lang', false)) $fieldsFilter['lang'] = $lang;
+        if ($ignoreDefaultFallback = $this->param('ignoreDefaultFallback', false)) $fieldsFilter['ignoreDefaultFallback'] = \in_array($ignoreDefaultFallback, ['1', '0']) ? \boolval($ignoreDefaultFallback) : $ignoreDefaultFallback;
+        if ($user) $fieldsFilter['user'] = $user;
+
+        if (\is_array($fieldsFilter) && \count($fieldsFilter)) {
+            $options['fieldsFilter'] = $fieldsFilter;
+        }
+
+        $entry = $this->module('collections')->findOne($collection['name'], $filter, $options['fields'] ?? null, $options['populate'] ?? false, $options['fieldsFilter'] ?? []);
+
+        if (!$entry) {
+            return $this->stop('{"error": "Entry not found."}', 404);
+        }
+
+        return $entry;
+    }
+
+    public function save($collection = null) {
 
         $user = $this->module('cockpit')->getUser();
         $data = $this->param('data', null);
@@ -147,12 +208,16 @@ class RestApi extends \LimeExtra\Controller {
 
         if ($revision = $this->param('revision', null)) $options['revision'] = $this->app->helper('utils')->fixStringBooleanValues($revision);
 
-        $data = $this->module('collections')->save($collection, $data, $options); 
+        try {
+            $data = $this->module('collections')->save($collection, $data, $options); 
+        } catch(\Throwable $e) {
+            $this->app->stop(['error' => $e->getMessage()], 412);
+        }
 
         return $data;
     }
 
-    public function remove($collection=null) {
+    public function remove($collection = null) {
 
         $user   = $this->module('cockpit')->getUser();
         $filter = $this->param('filter', null);

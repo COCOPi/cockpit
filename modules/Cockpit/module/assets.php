@@ -121,7 +121,14 @@ $this->module('cockpit')->extend([
 
     'uploadAssets' => function($param = 'files', $meta = []) {
 
-        $files     = $_FILES[$param] ?? [];
+        $files = [];
+
+        if (is_string($param) && isset($_FILES[$param])) {
+            $files = $_FILES[$param];
+        } elseif (is_array($param) && isset($param['name'], $param['error'], $param['tmp_name'])) {
+            $files = $param;
+        }
+
         $uploaded  = [];
         $failed    = [];
         $_files    = [];
@@ -170,7 +177,7 @@ $this->module('cockpit')->extend([
 
         $assets = isset($assets[0]) ? $assets : [$assets];
 
-        foreach($assets as &$asset) {
+        foreach ($assets as &$asset) {
 
             if (!isset($asset['_id'])) continue;
 

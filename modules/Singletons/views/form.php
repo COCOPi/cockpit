@@ -7,6 +7,7 @@
 
 <script>
     window.__singletonData = {{ json_encode($data) }} || {};
+    window.__singleton = {{ json_encode($singleton) }} || {};
 </script>
 
 <div riot-view>
@@ -18,7 +19,7 @@
                 <li><a href="@route('/singletons')">@lang('Singletons')</a></li>
                 <li class="uk-active" data-uk-dropdown>
 
-                    <a><i class="uk-icon-bars"></i> {{ htmlspecialchars(@$singleton['label'] ? $singleton['label']:$singleton['name']) }}</a>
+                    <a><i class="uk-icon-bars"></i> {{ htmlspecialchars(@$singleton['label'] ? $singleton['label']:$singleton['name'], ENT_QUOTES, 'UTF-8') }}</a>
 
                     @if($app->module('singletons')->hasaccess($singleton['name'], 'edit'))
                     <div class="uk-dropdown">
@@ -37,9 +38,6 @@
                     <img src="@url($singleton['icon'] ? 'assets:app/media/icons/'.$singleton['icon']:'singletons:icon.svg')" width="40" alt="icon">
                 </div>
                 <div class="uk-flex-item-1">{ singleton.label || singleton.name }</div>
-                @if($app->module('cockpit')->isSuperAdmin())
-                <a class="uk-button uk-button-outline uk-text-warning" onclick="{showDataObject}">@lang('Show json')</a>
-                @endif
             </div>
         </div>
 
@@ -72,7 +70,7 @@
 
         @if($singleton['description'])
         <div class="uk-margin uk-text-muted">
-            {{ htmlspecialchars($singleton['description']) }}
+            {{ htmlspecialchars($singleton['description'], ENT_QUOTES, 'UTF-8') }}
         </div>
         @endif
 
@@ -131,19 +129,24 @@
 
             <div class="uk-grid-margin uk-width-medium-1-4 uk-flex-order-first uk-flex-order-last-medium">
 
-                <div class="uk-margin uk-form" if="{ languages.length }">
+                @if($app->module('cockpit')->isSuperAdmin())
+                <div class="uk-button-group uk-flex uk-margin">
+                    <a class="uk-button" onclick="{showDataObject}">@lang('Show json')</a>
+                </div>
+                @endif
 
-                    <div class="uk-width-1-1 uk-form-select">
 
-                        <label class="uk-text-small">@lang('Language')</label>
-                        <div class="uk-margin-small-top"><span class="uk-badge uk-badge-outline {lang ? 'uk-text-primary' : 'uk-text-muted'}">{ lang ? _.find(languages,{code:lang}).label:App.$data.languageDefaultLabel }</span></div>
-
-                        <select bind="lang">
-                            <option value="">{App.$data.languageDefaultLabel}</option>
-                            <option each="{language in languages}" value="{language.code}">{language.label}</option>
-                        </select>
+                <div class="uk-panel uk-panel-box uk-panel-framed uk-width-1-1 uk-form-select uk-form" if="{ languages.length }">
+                    
+                    <div class="uk-text-bold {lang ? 'uk-text-primary' : 'uk-text-muted'}">
+                        <i class="uk-icon-globe"></i>
+                        <span class="uk-margin-small-left">{ lang ? _.find(languages,{code:lang}).label:App.$data.languageDefaultLabel }</span>
                     </div>
 
+                    <select bind="lang" onchange="{persistLanguage}">
+                        <option value="">{App.$data.languageDefaultLabel}</option>
+                        <option each="{language,idx in languages}" value="{language.code}">{language.label}</option>
+                    </select>
                 </div>
 
                 <div class="uk-margin">
@@ -184,7 +187,7 @@
 
             this.mixin(RiotBindMixin);
 
-            this.singleton = {{ json_encode($singleton) }};
+            this.singleton = window.__singleton;
             this.fields    = this.singleton.fields;
             this.fieldsidx = {};
 
@@ -238,6 +241,10 @@
                 this.group = $this._groups[1];
             }
 
+            if (this.languages.length) {
+                this.lang = App.Utils.params('lang') || App.session.get('singletons.form.'+this.singleton._id+'.lang', '');
+            }
+
             this.on('mount', function(){
 
                 // bind global command + save
@@ -275,13 +282,15 @@
 
                 if(e) e.preventDefault();
 
-                var required = [];
+                var required = [], val;
 
-                this.fields.forEach(function(field){
+                this.fields.forEach(function(field) {
 
-                    if (field.required && !$this.data[field.name]) {
+                    val = $this.data[field.name];
 
-                        if (!($this.data[field.name]===false || $this.data[field.name]===0)) {
+                    if (field.required && (!val || (Array.isArray(val) && !val.length))) {
+
+                        if (!(val===false || val===0)) {
                             required.push(field.label || field.name);
                         }
                     }
@@ -367,6 +376,10 @@
                 }
 
                 return true;
+            }
+
+            persistLanguage(e) {
+                App.session.set('singletons.form.'+this.singleton._id+'.lang', e.target.value);
             }
 
             showDataObject() {

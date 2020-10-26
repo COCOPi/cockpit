@@ -48,6 +48,12 @@
             display:none
         }
 
+        .field-layout-component-badge {
+            padding: .2em .2em;
+            font-size: 80%;
+            line-height: 1;
+        }
+
     </style>
 
 
@@ -57,8 +63,9 @@
 
             <div class="uk-flex uk-flex-middle uk-text-small uk-visible-hover">
                 <img class="uk-margin-small-right" riot-src="{ parent.components[item.component].icon ? parent.components[item.component].icon : App.base('/assets/app/media/icons/component.svg')}" width="16">
-                <div class="uk-text-bold uk-text-truncate uk-flex-item-1">
-                    <a class="uk-link-muted" onclick="{ parent.settings }">{ item.name || parent.components[item.component].label || App.Utils.ucfirst(item.component) }</a>
+                <div class="uk-text-truncate uk-flex-item-1">
+                    <a class="uk-text-bold uk-link-muted" onclick="{ parent.settings }">{ itemDisplayName(item, parent) }</a>
+                    <span class="uk-text-muted uk-badge uk-badge-outline field-layout-component-badge uk-margin-small-left" if="{item.name}">{ componentDisplayName(item.component, parent) }</span>
                 </div>
                 <div class="uk-text-small uk-invisible">
                     <a onclick="{ parent.cloneComponent }" title="{ App.i18n.get('Clone Component') }"><i class="uk-icon-clone"></i></a>
@@ -68,11 +75,11 @@
             </div>
 
             <div class="uk-margin" if="{parent.components[item.component].children}">
-                <field-layout bind="items[{idx}].children" child="true" parent-component="{parent.components[item.component]}" components="{ parent.components }" exclude="{ opts.exclude }" preview="{opts.preview}"></field-layout>
+                <field-layout bind="items[{idx}].children" child="true" parent-component="{parent.components[item.component]}" components="{ parent.components }" exclude="{ opts.exclude }" restrict="{ opts.restrict }" preview="{opts.preview}"></field-layout>
             </div>
 
             <div class="uk-margin" if="{item.component == 'grid'}">
-                <field-layout-grid bind="items[{idx}].columns" components="{ parent.components }" exclude="{ opts.exclude }" preview="{opts.preview}"></field-layout-grid>
+                <field-layout-grid bind="items[{idx}].columns" components="{ parent.components }" exclude="{ opts.exclude }" restrict="{ opts.restrict }" preview="{opts.preview}"></field-layout-grid>
             </div>
 
             <raw class="layout-field-preview uk-text-small uk-text-muted" content="{getPreview(item)}" if="{showPreview}"></raw>
@@ -97,7 +104,7 @@
             </ul>
 
             <div class="uk-grid uk-grid-match uk-grid-small uk-grid-width-medium-1-4">
-                 <div class="uk-grid-margin" each="{component,name in components}" show="{ !componentGroup || (componentGroup == component.group) }">
+                 <div class="uk-grid-margin" each="{component,name in components}" show="{ isComponentAvailable(name) }">
                     <div class="uk-panel uk-panel-framed uk-text-center">
                         <img riot-src="{ component.icon || App.base('/assets/app/media/icons/component.svg')}" width="30">
                         <p class="uk-text-small">{ component.label || App.Utils.ucfirst(name) }</p>
@@ -250,7 +257,12 @@
         }
 
         if (opts.parentComponent && opts.parentComponent.options) {
-            opts = App.$.extend(true, opts.parentComponent.options, opts);
+            opts = App.$.extend(true, {}, opts.parentComponent.options, opts);
+            for (var field of ["restrict", "exclude"]) {
+                if (opts.parentComponent.options[field] !== undefined) {
+                    opts[field] = opts.parentComponent.options[field];
+                }
+            }
         }
 
         
@@ -260,20 +272,14 @@
 
             App.trigger('field.layout.components', {components:this.components, opts:opts});
 
-            // exclude components?
-            if (Array.isArray(opts.exclude) && opts.exclude.length) {
-
-                opts.exclude.forEach(function(c) {
-                    if ($this.components[c]) delete $this.components[c];
-                });
-            }
-
-
             if (opts.components && App.Utils.isObject(opts.components)) {
                 this.components = App.$.extend(true, this.components, opts.components);
             }
 
             Object.keys(this.components).forEach(function(k) {
+
+                if (Array.isArray(opts.exclude) && opts.exclude.indexOf(k) > -1) return;
+                if (Array.isArray(opts.restrict) && opts.restrict.indexOf(k) == -1) return;
 
                 $this.components[k].group = $this.components[k].group || 'Misc';
 
@@ -370,7 +376,7 @@
                 value = [];
             }
 
-            if (JSON.stringify(this.items) != JSON.stringify(value)) {
+            if (JSON.stringify(this.items) !== JSON.stringify(value)) {
                 this.items = value;
                 this.update();
             }
@@ -382,11 +388,19 @@
             var n = this;
 
             while (n.parent) {
-                if (n.parent.root.getAttribute('data-is') == 'field-layout') {
+                if (n.parent.root.getAttribute('data-is') === 'field-layout') {
                     n.parent.$setValue(n.parent.items);
                 }
                 n = n.parent;
             }
+        };
+
+        isComponentAvailable(name) {
+
+            if (Array.isArray(opts.exclude) && opts.exclude.indexOf(name) > -1) return false;
+            if (Array.isArray(opts.restrict) && opts.restrict.indexOf(name) === -1) return false;
+
+            return !this.componentGroup || (this.componentGroup === this.components[name].group);
         }
 
         addComponent(e, push) {
@@ -427,7 +441,7 @@
                 item.children = [];
             }
 
-            if (e.item.name == 'grid') {
+            if (e.item.name === 'grid') {
                 item.columns = [];
             }
 
@@ -557,6 +571,14 @@
             return '';
         }
 
+        itemDisplayName(item, parent) {
+            return item.name || this.componentDisplayName(item.component, parent);
+        }
+
+        componentDisplayName(component, parent) {
+            return parent.components[component].label || App.Utils.ucfirst(component)
+        }
+
         function getPathUrl(path) {
 
             var p = path, 
@@ -566,7 +588,7 @@
             if (url.match(/^(http\:|https\:|\/\/)/) && !(url.includes(ASSETS_URL) || url.includes(SITE_URL))) {
                 src = url;
             } else {
-                src = App.route('/cockpit/utils/thumb_url?src='+url+'&w=50&h=50&m=bestFit&o=1');
+                src = App.route('/cockpit/utils/thumb_url?src='+url+'&w=50&h=50&m=bestFit&re=1');
             }
             
             if (src.match(/\.(svg|ico)$/i)) {
@@ -653,12 +675,12 @@
             var n = this;
 
             while (n.parent) {
-                if (n.parent.root.tagName == 'field-layout' || n.parent.root.getAttribute('data-is') == 'field-layout') {
+                if (n.parent.root.tagName === 'field-layout' || n.parent.root.getAttribute('data-is') === 'field-layout') {
                     n.parent.$setValue(n.parent.items);
                 }
                 n = n.parent;
             }
-        }
+        };
 
         this.on('mount', function() {
 

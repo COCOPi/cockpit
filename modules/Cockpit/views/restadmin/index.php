@@ -8,7 +8,9 @@
 
 <div class="uk-margin-top uk-form" riot-view>
 
-    <div class="uk-grid">
+    @trigger('cockpit.restadmin.top', [&$keys])
+
+    <div class="uk-grid uk-grid-large">
         <div class="uk-width-2-3">
 
  
@@ -17,7 +19,7 @@
             <div class="uk-grid uk-grid-small uk-flex-middle uk-margin-small-top">
                 <div class="uk-flex-item-1">
                     <input class="uk-width-1-1 uk-form-large uk-text-primary uk-text-monospace" type="text" placeholder="@lang('No key generated')" bind="keys.master" name="fullaccesskey" readonly>
-                    <span class="uk-text-small uk-text-danger uk-margin-small-top" show="{ keys.master }">@lang('Share with caution')</span>
+                    <span class="uk-text-small uk-text-danger uk-text-bold uk-text-upper uk-margin-small-top" show="{ keys.master }">@lang('Share with caution')</span>
                 </div>
                 <div if="{keys.master}">
                     <a class="uk-margin-right" onclick="{ copyApiKey }" title="@lang('Copy Token')" data-uk-tooltip="pos:'top'"><i class="uk-icon-clone"></i></a>
@@ -38,10 +40,10 @@
                     <div class="uk-panel uk-panel-box uk-panel-card uk-flex-item-1 uk-margin-right">
 
                         <div class="uk-form-row">
-                            <label class="uk-text-small uk-text-bold uk-text-uppercase">@lang('API-Key')</label>
+                            <label class="uk-text-small uk-text-bold uk-text-upper">@lang('API-Key')</label>
 
                             <div class="uk-flex uk-flex-middle">
-                                <input class="uk-width-1-1 uk-form-large uk-margin-right uk-text-primary uk-text-monospace" type="text" placeholder="@lang('No key generated')" bind="keys.special[{idx}].token" readonly>
+                                <input class="uk-width-1-1 uk-form-large uk-margin-right uk-text-monospace" type="text" placeholder="@lang('No key generated')" bind="keys.special[{idx}].token" readonly>
                                 <a class="uk-margin-right" onclick="{ parent.copyApiKey }" title="@lang('Copy Token')" data-uk-tooltip="pos:'top'"><i class="uk-icon-clone"></i></a>
                                 <a onclick="{ parent.generate }" title="@lang('Generate Token')" data-uk-tooltip="pos:'top'"><i class="uk-icon-magic"></i></a>
                             </div>
@@ -72,6 +74,8 @@
                 <button class="uk-button uk-button-link" onclick="{ addKey }"><i class="uk-icon-plus"></i> @lang('API Key')</button>
             </div>
 
+            @trigger('cockpit.restadmin.main', [&$keys])
+
             <cp-actionbar>
                 <div class="uk-container uk-container-center">
                     <button class="uk-button uk-button-primary uk-button-large" type="button" name="button" onclick="{ save }">@lang('Save')</button>
@@ -82,7 +86,7 @@
         </div>
 
         <div class="uk-width-1-3">
-            <!-- TODo: Quick Docs -->
+            @trigger('cockpit.restadmin.aside', [&$keys])
         </div>
     </div>
 

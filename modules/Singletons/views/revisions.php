@@ -8,6 +8,8 @@
 <script>
 
   window.__revisions = {{ json_encode($revisions) }};
+  window.__singleton = {{ json_encode($singleton) }};
+  window.__singletonData = {{ json_encode($data) }};
 
 </script>
 
@@ -15,7 +17,7 @@
     <ul class="uk-breadcrumb">
         <li><a href="@route('/singletons')">@lang('Singletons')</a></li>
         <li data-uk-dropdown="mode:'hover', delay:300">
-            <a href="@route('/singletons/form/'.$singleton['name'])"><i class="uk-icon-bars"></i> {{ htmlspecialchars(@$singleton['label'] ? $singleton['label']:$singleton['name']) }}</a>
+            <a href="@route('/singletons/form/'.$singleton['name'])"><i class="uk-icon-bars"></i> {{ htmlspecialchars(@$singleton['label'] ? $singleton['label']:$singleton['name'], ENT_QUOTES, 'UTF-8') }}</a>
 
             @if($app->module('singletons')->hasaccess($singleton['name'], 'edit'))
             <div class="uk-dropdown">
@@ -144,9 +146,9 @@
 
         var $this = this;
 
-        this.singleton  = {{ json_encode($singleton) }};
+        this.singleton  = window.__singleton;
         this.revisions  = window.__revisions;
-        this.current    = {{ json_encode($data) }};
+        this.current    = window.__singletonData;
 
         this.showOnlyChanged = true;
 

@@ -368,7 +368,7 @@ class App implements \ArrayAccess {
                 if (count($parts)==2){
                     if (!isset($this->paths[$parts[0]])) return false;
 
-                    foreach ($this->paths[$parts[0]] as &$path){
+                    foreach ($this->paths[$parts[0]] as &$path) {
                         if (\file_exists($path.$parts[1])){
                             return $path.$parts[1];
                         }
@@ -637,23 +637,20 @@ class App implements \ArrayAccess {
     */
     public function style($href, $version=false) {
 
-        $list = [];
+        $output = '';
 
-        foreach ((array)$href as $style) {
+        $type = 'text/css';
+        $rel  = 'stylesheet';
+        $src = $href;
 
-            $type = 'text/css';
-            $rel  = 'stylesheet';
-            $src  = $style;
-
-            if (\is_array($style)) {
-                extract($style);
-            }
-
-            $ispath = \strpos($src, ':') !== false && !\preg_match('#^(|http\:|https\:)//#', $src);
-            $list[] = '<link href="'.($ispath ? $this->pathToUrl($src):$src).($version ? "?ver={$version}":"").'" type="'.$type.'" rel="'.$rel.'">';
+        if (\is_array($href)) {
+            extract($href, \EXTR_OVERWRITE);
         }
 
-        return \implode("\n", $list);
+        $ispath = \strpos($src, ':') !== false && !\preg_match('#^(|http\:|https\:)//#', $src);
+        $output = '<link href="'.($ispath ? $this->pathToUrl($src):$src).($version ? "?ver={$version}":"").'" type="'.$type.'" rel="'.$rel.'">';
+
+        return $output;
     }
 
     /**
@@ -663,23 +660,19 @@ class App implements \ArrayAccess {
     */
     public function script($src, $version=false){
 
-        $list = [];
+        $output = '';
 
-        foreach ((array)$src as $script) {
+        $type = 'text/javascript';
+        $load = '';
 
-            $type = 'text/javascript';
-            $src  = $script;
-            $load = '';
-
-            if (\is_array($script)) {
-                extract($script);
-            }
-
-            $ispath = \strpos($src, ':') !== false && !\preg_match('#^(|http\:|https\:)//#', $src);
-            $list[] = '<script src="'.($ispath ? $this->pathToUrl($src):$src).($version ? "?ver={$version}":"").'" type="'.$type.'" '.$load.'></script>';
+        if (\is_array($src)) {
+            extract($src, \EXTR_OVERWRITE);
         }
 
-        return \implode("\n", $list);
+        $ispath = \strpos($src, ':') !== false && !\preg_match('#^(|http\:|https\:)//#', $src);
+        $output = '<script src="'.($ispath ? $this->pathToUrl($src):$src).($version ? "?ver={$version}":"").'" type="'.$type.'" '.$load.'></script>';
+
+        return $output;
     }
 
     public function assets($src, $version=false){
@@ -691,7 +684,7 @@ class App implements \ArrayAccess {
             $src = $asset;
 
             if (\is_array($asset)) {
-                extract($asset);
+                extract($asset, \EXTR_OVERWRITE);
             }
 
             if (@\substr($src, -3) == '.js') {
@@ -849,11 +842,6 @@ class App implements \ArrayAccess {
         $this->trigger('after');
 
         if ($flush) {
-
-            if ($this->response->gzip && !\ob_start('ob_gzhandler')) {
-                \ob_start();
-            }
-
             $this->response->flush();
         }
 
@@ -1150,9 +1138,10 @@ class App implements \ArrayAccess {
 
     protected function bootModule($module) {
 
-        $app = $this;
-
-        require($module->_bootfile);
+        if (is_file($module->_bootfile)) {
+            $app = $this;
+            require($module->_bootfile);
+        }
     }
 
     // accces to services

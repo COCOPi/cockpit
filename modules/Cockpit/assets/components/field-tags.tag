@@ -19,7 +19,7 @@
             <span class="field-tag"><i class="uk-icon-tag"></i> { _tag } <a onclick="{ parent.remove }"><i class="uk-icon-close"></i></a></span>
         </div>
 
-        <div>
+        <div show="{allowInput}">
             <div ref="autocomplete" class="uk-autocomplete uk-form-icon uk-form">
                 <i class="uk-icon-tag"></i>
                 <input ref="input" class="uk-width-1-1 uk-form-blank" type="text" placeholder="{ App.i18n.get(opts.placeholder || 'Add Tag...') }">
@@ -33,12 +33,17 @@
         var $this = this;
 
         this._tags = [];
+        this.allowInput = true;
 
         this.on('mount', function(){
             this.update()
         });
 
         this.on('update', function(){
+
+            if ($this.opts.limit) {
+                $this.allowInput = $this._tags.length < $this.opts.limit;
+            }
 
             if (opts.autocomplete) {
 
@@ -65,10 +70,9 @@
                 },
 
                 'selectitem.uk.autocomplete keydown': function(e, data) {
+                    var value = e.type === 'keydown' ? $this.refs.input.value : data.value;
 
-                    var value = e.type=='keydown' ? $this.refs.input.value : data.value;
-
-                    if (e.type=='keydown' && e.keyCode != 13 && e.keyCode != 188) {
+                    if (e.type === 'keydown' && e.keyCode !== 13 && e.key !== ",") {
                         return;
                     }
 
