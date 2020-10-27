@@ -1,6 +1,6 @@
 <?php
 
-require(__DIR__.'/../bootstrap.php');
+require_once(__DIR__.'/../bootstrap.php');
 
 function ensure_writable($path) {
     try {
@@ -53,7 +53,7 @@ function check_install() {
 }
 
 function has_min_1_user(&$app=null) {
-    $app = $app ?: cockpit();
+    $app = $app ?: $cockpit ?: cockpit();
     // check whether cockpit is already installed
     try {
         if ($app->storage->getCollection('cockpit/accounts')->count()) {
@@ -63,19 +63,7 @@ function has_min_1_user(&$app=null) {
     return false;
 }
 
-function maybe_install(&$app=null) {
-    error_log('Trying install...');
-    $failed = check_install();
-    if ($failed) {
-        return ['failed' => $failed];
-    }
-
-    $app = $app ?: cockpit();
-    if(has_min_1_user($app)) {
-        error_log('User Exists!');
-        return [];
-    }
-
+function do_admin_install(&$app=null) {
     $created = time();
     $password = getenv('COCKPIT_ADMIN_PASSWORD');
     $default_password = 'admin';
@@ -87,16 +75,34 @@ function maybe_install(&$app=null) {
         'active'   => true,
         'group'    => 'admin',
         'password' => $app->hash($password ?: $default_password),
-        'i18n'     => getenv('COCKPIT_ADMIN_I18N') ?: 'en',
+        'i18n'     => $app('i18n')->locale,
         '_created' => $created,
         '_modified'=> $created,
     ];
 
-    error_log('Creating user "' . $account['user'] . '" ...');
+    error_log('Creating admin user "' . $account['user'] . '" ...');
     $app->storage->insert("cockpit/accounts", $account);
     return [
         'user' => $account ? $account['user'] : null,
         'specified_password' => (bool)$password,
         'default_password' => $default_password,
     ];
+}
+
+function maybe_install(&$app=null) {
+    // error_log('Trying install...');
+    $app = $app ?: $cockpit ?: cockpit();
+    if(has_min_1_user($app)) {
+        // error_log('User Exists!');
+        return [];
+    }
+
+    $failed = check_install();
+    if ($failed) {
+        foreach ($failed as &$desc) {
+            error_log('Error checking install: '.$desc);
+        }
+        return ['failed' => $failed];
+    }
+    do_admin_install($app);
 }

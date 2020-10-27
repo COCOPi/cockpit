@@ -19,7 +19,13 @@ if (PHP_SAPI == 'cli-server' && is_file(__DIR__.parse_url($_SERVER['REQUEST_URI'
 }
 
 // bootstrap cockpit
-require(__DIR__.'/bootstrap.php');
+require_once(__DIR__.'/bootstrap.php');
+// maybe create the initial admin user
+// checks the database to see if there's at least one user
+if(getenv('COCKPIT_ADMIN_PASSWORD')) {
+    require_once(__DIR__.'/install/installer.php');
+    maybe_install($cockpit);
+}
 
 # admin route
 if (COCKPIT_ADMIN && !defined('COCKPIT_ADMIN_ROUTE')) {

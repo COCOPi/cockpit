@@ -72,7 +72,7 @@ if(! $info) {
                         user: <?= $info['user'] ?> <br/>
                         password: <?=
                             $info['specified_password']
-                            ? '<b>*defined via environment variable.*</b>'
+                            ? '<b>*defined via environment.*</b>'
                             : $info['default_password'] ?>
                     </p>
                 </div>
