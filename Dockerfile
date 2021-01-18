@@ -2,7 +2,7 @@ FROM php:7-apache
 
 RUN apt-get update \
     && apt-get install -y \
-		wget zip unzip \
+        wget zip unzip \
         libzip-dev \
         libfreetype6-dev \
         libjpeg62-turbo-dev \
@@ -18,8 +18,8 @@ RUN apt-get update \
 RUN echo "extension=mongodb.so" > /usr/local/etc/php/conf.d/mongodb.ini
 RUN echo "extension=redis.so" > /usr/local/etc/php/conf.d/redis.ini
 
-RUN chown -R www-data:www-data /var/www/html
+COPY . /var/www/html
+VOLUME /var/www/html/storage
 
-VOLUME /var/www/html
-
-CMD ["apache2-foreground"]
+CMD chown -R www-data:www-data /var/www/html && \
+    apache2-foreground
